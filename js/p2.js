@@ -8,6 +8,7 @@ var animStart = 0;
 var animTotalMs = 0;
 var startPose = null;
 var endPose = null;
+var moveStep = 10;
 
 var controls = {
   giroBase: 0,
@@ -67,38 +68,35 @@ function init()
   cameraControls.target.set( 0, 0, 0 );
   cameraControls.update();
   window.addEventListener('resize', updateAspectRatio );
+  window.addEventListener('keydown', handleKeyDown );
 }
 
 function loadScene() {
-    let blackMaterial = new THREE.MeshBasicMaterial({ color: 0x819efc });
-    let yellowMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-    let redMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    let blueMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
-    let greenMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    let transparentMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 1 });
+    let floorMaterial = new THREE.MeshBasicMaterial({ color: 0x819efc });
+    let robotMaterial = new THREE.MeshNormalMaterial();
 
-    let floor = new THREE.Mesh(new THREE.BoxGeometry(1000, 0, 1000), blackMaterial);
+    let floor = new THREE.Mesh(new THREE.BoxGeometry(1000, 0, 1000), floorMaterial);
     scene.add(floor);
 
     let robot = new THREE.Object3D();
     scene.add(robot);
 
-    let base = new THREE.Mesh(new THREE.CylinderGeometry(50, 50, 15, 32), transparentMaterial);
+    let base = new THREE.Mesh(new THREE.CylinderGeometry(50, 50, 15, 32), robotMaterial);
     base.position.setY(7.5);
     robot.add(base);
 
     let brazo = new THREE.Object3D();
     base.add(brazo);
 
-    let eje = new THREE.Mesh(new THREE.CylinderGeometry(20, 20, 18, 32), transparentMaterial);
+    let eje = new THREE.Mesh(new THREE.CylinderGeometry(20, 20, 18, 32), robotMaterial);
     eje.rotateX(Math.PI / 2);
     brazo.add(eje);
 
-    let esparrago = new THREE.Mesh(new THREE.BoxGeometry(18, 120, 12), blueMaterial);
+    let esparrago = new THREE.Mesh(new THREE.BoxGeometry(18, 120, 12), robotMaterial);
     esparrago.position.setY(60);
     brazo.add(esparrago);
 
-    let rotule = new THREE.Mesh(new THREE.SphereGeometry(20, 20, 20), transparentMaterial);
+    let rotule = new THREE.Mesh(new THREE.SphereGeometry(20, 20, 20), robotMaterial);
     rotule.position.setY(120)
     brazo.add(rotule)
 
@@ -106,28 +104,28 @@ function loadScene() {
     antebrazo.position.setY(120);
     brazo.add(antebrazo);
 
-    let disco = new THREE.Mesh(new THREE.CylinderGeometry(22, 22, 6, 32), transparentMaterial);
+    let disco = new THREE.Mesh(new THREE.CylinderGeometry(22, 22, 6, 32), robotMaterial);
     antebrazo.add(disco);
 
-    let nervio1 = new THREE.Mesh(new THREE.BoxGeometry(4, 80, 4), redMaterial);
+    let nervio1 = new THREE.Mesh(new THREE.BoxGeometry(4, 80, 4), robotMaterial);
     nervio1.position.set(8, 40, 8);
     antebrazo.add(nervio1);
-    let nervio2 = new THREE.Mesh(new THREE.BoxGeometry(4, 80, 4), redMaterial);
+    let nervio2 = new THREE.Mesh(new THREE.BoxGeometry(4, 80, 4), robotMaterial);
     nervio2.position.set(-8, 40, 8);
     antebrazo.add(nervio2);
-    let nervio3 = new THREE.Mesh(new THREE.BoxGeometry(4, 80, 4), redMaterial);
+    let nervio3 = new THREE.Mesh(new THREE.BoxGeometry(4, 80, 4), robotMaterial);
     nervio3.position.set(8, 40, -8);
     antebrazo.add(nervio3);
-    let nervio4 = new THREE.Mesh(new THREE.BoxGeometry(4, 80, 4), redMaterial);
+    let nervio4 = new THREE.Mesh(new THREE.BoxGeometry(4, 80, 4), robotMaterial);
     nervio4.position.set(-8, 40, -8);
     antebrazo.add(nervio4);
 
-    let mano = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 40, 32), greenMaterial);
+    let mano = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 40, 32), robotMaterial);
     mano.rotateX(Math.PI / 2);
     mano.position.setY(80);
     antebrazo.add(mano);
 
-    let paralelepipediz = new THREE.Mesh(new THREE.BoxGeometry(19, 4, 20), redMaterial)
+    let paralelepipediz = new THREE.Mesh(new THREE.BoxGeometry(19, 4, 20), robotMaterial)
     paralelepipediz.translateX(10)
     paralelepipediz.translateY(8)
 
@@ -161,8 +159,10 @@ function loadScene() {
 
     geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     geometry.setIndex(indices);
+    geometry = geometry.toNonIndexed();
+    geometry.computeVertexNormals();
 
-    let pinzaiz = new THREE.Mesh(geometry, redMaterial);
+    let pinzaiz = new THREE.Mesh(geometry, robotMaterial);
     pinzaiz.rotateX(Math.PI/2)
     pinzaiz.translateX(9.5)
     pinzaiz.translateY(-10)
@@ -286,4 +286,30 @@ function render()
 	requestAnimationFrame( render );
 	update();
 	renderer.render( scene, camera );
+}
+
+function handleKeyDown(event){
+  if (!robotRef) return;
+
+  let moved = true;
+  switch (event.code){
+    case 'ArrowUp':
+      robotRef.position.z -= moveStep;
+      break;
+    case 'ArrowDown':
+      robotRef.position.z += moveStep;
+      break;
+    case 'ArrowLeft':
+      robotRef.position.x -= moveStep;
+      break;
+    case 'ArrowRight':
+      robotRef.position.x += moveStep;
+      break;
+    default:
+      moved = false;
+  }
+
+  if (moved){
+    event.preventDefault();
+  }
 }
