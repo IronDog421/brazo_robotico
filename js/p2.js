@@ -235,7 +235,7 @@ function applyPose(p){
   brazoRef.rotation.z     = degToRad(p.giroBrazo);
   antebrazoRef.rotation.y = degToRad(p.giroAnteY);
   antebrazoRef.rotation.z = degToRad(p.giroAnteZ);
-  manoRef.rotation.z      = degToRad(p.giroPinza);
+  manoRef.rotation.y      = degToRad(p.giroPinza);
   pinzaIzRef.position.y   = pinzaY_L0 + p.apertura;
   pinzaDeRef.position.y   = pinzaY_R0 - p.apertura;
 }
